@@ -5,9 +5,12 @@
   --cell-spacing: 20px;
   --row-label-font-weight: 700;
   --cell-font-weight: 400;
+  --cell-font-size: 1.8em;
   --font-family: 'Kanit', monospace, sans-serif;
   --dark-background: #303030;
   --white: #faebd7;
+  --red: #ff7f7e;
+  --trash-hovering-border: 100px;
 }
 
 body {
@@ -16,6 +19,7 @@ body {
   width: 100%;
   font-family: 'Kanit', monospace, sans-serif;
   background-color: var(--dark-background);
+  overflow: hidden;
 }
 
 .tier-label {
@@ -29,32 +33,47 @@ body {
   font-weight: var(--row-label-font-weight);
 }
 
+.trash {
+  position: absolute;
+  visibility: visible;
+  opacity: 1;
+  top: 0;
+  right: 0;
+  transition: visibility 0s, opacity 0.5s ease-in;
+}
+
+.trash.hidden {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0.5s, opacity 0.5s ease-out;
+}
+
+.trash img {
+  width: 50px;
+  height: 50px;
+  padding: 10px;
+  margin: 4px;
+  background: var(--red);
+  border-radius: 100%;
+  z-index: 100;
+}
+
+.trash.hovering {
+  top: calc(-1 * var(--trash-hovering-border));
+  right: calc(-1 * var(--trash-hovering-border));
+}
+
+.trash.hovering img {
+  border: var(--trash-hovering-border) solid #000;
+}
+
 .thing-cell {
   margin: 0 var(--cell-spacing) 0 0;
   cursor: move;
-  padding-left: 15px;
-  margin-left: -15px;
   font-weight: var(--cell-font-weight);
-}
-
-.remove {
-  display: none;
-}
-
-.thing-cell:hover .remove {
-  line-height: 10px;
-  background: #f00;
-  border-radius: 100%;
-  font-size: 0.5em;
-  height: 15px;
-  width: 15px;
-  position: relative;
-  top: -28px;
-  left: -15px;
-  padding: 2px;
-  display: inline-block;
-  margin-right: -19px;
-  cursor: pointer;
+  font-size: var(--cell-font-size);
+  text-align: left;
+  min-width: unset;
 }
 
 .dragging-over {

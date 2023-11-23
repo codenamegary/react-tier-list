@@ -1,42 +1,38 @@
-import React, { FormEvent, useEffect, useReducer, useState } from 'react'
-import { Thing, Tier, TierSchema } from './TierSchema'
-import { Op, appReducer } from './AppReducer'
-import { v4 as uuidv4 } from 'uuid'
+import React, { FormEvent, useReducer, useState } from 'react'
+import { Op, appReducer, init } from './AppReducer'
+import { Thing, Tier } from './TierSchema'
 import './theme.css'
 
-const storageId = 'tier-list'
 
-const save = (schema: TierSchema) => {
-  localStorage.setItem(storageId, JSON.stringify(schema))
+type ThingCellProps = {
+  thing: Thing
+  dragStart: (thing: Thing) => void
 }
 
-const load = (): TierSchema | undefined => {
-  const data = localStorage.getItem(storageId)
-  if (!data) return undefined
-  return JSON.parse(data)
-}
-
-const ThingCell: React.FC<{ thing: Thing, remove: (thing: Thing) => void }> = ({ thing, remove }) => {
+const ThingCell: React.FC<ThingCellProps> = ({ thing, dragStart }) => {
   return (
     <span
       draggable
-      onDragStart={(e) => e.dataTransfer.setData("thingId", thing.id)}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("thingId", thing.id)
+        dragStart(thing)
+      }}
       className='tier-label thing-cell'
     >
-      <span className='remove' onClick={() => remove(thing)} title={`Remove ${thing.title} from this list...`}>x</span>
       {thing.title}
     </span>
   )
 }
 
 type TierRowProps = {
-  tier: Tier,
-  things: Thing[],
+  tier: Tier
+  things: Thing[]
   move: (thing: Thing, tier: Tier) => void
-  remove: (thing: Thing) => void
+  dragStart: (thing: Thing) => void
+  dragEnd: () => void
 }
 
-const TierRow: React.FC<TierRowProps> = ({ tier, things, move, remove }) => {
+const TierRow: React.FC<TierRowProps> = ({ tier, things, move, dragStart, dragEnd }) => {
 
   const [draggingOver, setDraggingOver] = useState(false)
 
@@ -70,57 +66,19 @@ const TierRow: React.FC<TierRowProps> = ({ tier, things, move, remove }) => {
         const thing = things.find(v => v.id === thingId)
         if (!thing) return
         move(thing, tier)
+        dragEnd()
       }}
     >
       <span className='tier-label'>{tier.title}</span>
-      {things.filter(filter).map(t => <ThingCell key={`key-thing-${t.title}`} thing={t} remove={remove} />)}
+      {things.filter(filter).map(t => <ThingCell key={`key-thing-${t.title}`} thing={t} dragStart={dragStart} />)}
     </div>
   )
 }
 
 export const App: React.FC = () => {
 
-  const init = () => {
-    const fromStorage = load()
-    if (fromStorage) {
-      return {
-        ...fromStorage,
-        loading: false
-      }
-    }
-    const queue: Tier = {
-      id: uuidv4(),
-      title: "*",
-      row: 0,
-      hexColor: "#999999"
-    }
-    const schema: TierSchema = {
-      tiers: [
-        { id: uuidv4(), row: 1, title: "S", hexColor: "#7eff80" },
-        { id: uuidv4(), row: 2, title: "A", hexColor: "#beff7f" },
-        { id: uuidv4(), row: 3, title: "B", hexColor: "#feff7f" },
-        { id: uuidv4(), row: 5, title: "F", hexColor: "#ff7f7e" },
-        { id: uuidv4(), row: 4, title: "C", hexColor: "#ffdf80" },
-      ],
-      things: [
-        { id: uuidv4(), title: "Typescript" },
-        { id: uuidv4(), title: "Lambda" },
-        { id: uuidv4(), title: "Serverless" },
-        { id: uuidv4(), title: "DynamoDB" }
-      ]
-    }
-    schema.tiers.push(queue)
-    return {
-      ...schema,
-      loading: false
-    }
-  }
   const [state, dispatch] = useReducer(appReducer, null, init)
   const [text, setText] = useState("")
-
-  useEffect(() => {
-    save(state)
-  }, [state])
 
   const move = async (thing: Thing, tier: Tier) => {
     dispatch({ op: Op.PLACE, thing: thing, tier: tier })
@@ -139,26 +97,56 @@ export const App: React.FC = () => {
     setText("")
   }
 
+  const dragStart = async (thing: Thing) => {
+    dispatch({ op: Op.DRAG_START, thing: thing })
+  }
+
+  const dragEnd = () => {
+    dispatch({ op: Op.DRAG_END })
+  }
+
+  // Just ordering the array so that numbered
+  // tiers are at the top and the queue is
+  // at the bottom.
+  const tiers = [
+    ...(state.tiers.filter(t => t.row > 0)?.sort((t1, t2) => t1.row - t2.row)),
+    ...(state.tiers.filter(t => t.row === 0))
+  ]
+
   return (
-    <div style={{ width: "100%" }}>
-      {state.tiers.filter(t => t.row > 0)?.sort((t1, t2) => t1.row - t2.row).map(tier =>
+    <div
+      className='tier-list'
+      style={{ width: "100%" }}
+    >
+      {tiers.map(tier =>
         <TierRow
           key={`tier-${tier.row}`}
           tier={tier}
           things={state.things}
           move={move}
-          remove={remove}
+          dragStart={dragStart}
+          dragEnd={dragEnd}
         />)
       }
-      {state.tiers.filter(t => t.row === 0)?.map(tier =>
-        <TierRow
-          key={`tier-${tier.row}`}
-          tier={tier}
-          things={state.things}
-          move={move}
-          remove={remove}
-        />)
-      }
+      <div
+        className={`trash${state.dragging ? '' : ' hidden'}`}
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.currentTarget.classList.add('hovering')
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault()
+          e.currentTarget.classList.remove('hovering')
+        }}
+        onDrop={() => {
+          const thing = state.dragging
+          if (!thing) return
+          remove(thing)
+          dragEnd()
+        }}
+      >
+        <img src='/trash.svg' />
+      </div>
       <div className='add-form'>
         <form onSubmit={add}>
           <input
