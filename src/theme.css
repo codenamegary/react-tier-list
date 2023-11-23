@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@100;400;700&display=swap');
+
+:root {
+  --cell-height: 80px;
+  --cell-spacing: 20px;
+  --row-label-font-weight: 700;
+  --cell-font-weight: 400;
+  --font-family: 'Kanit', monospace, sans-serif;
+  --dark-background: #303030;
+  --white: #faebd7;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  font-family: 'Kanit', monospace, sans-serif;
+  background-color: var(--dark-background);
+}
+
+.tier-label {
+  font-size: 3em;
+  display: 'inline-block';
+  min-width: var(--cell-height);
+  height: var(--cell-height);
+  line-height: var(--cell-height);
+  text-align: center;
+  vertical-align: middle;
+  font-weight: var(--row-label-font-weight);
+}
+
+.thing-cell {
+  margin: 0 var(--cell-spacing) 0 0;
+  cursor: move;
+  padding-left: 15px;
+  margin-left: -15px;
+  font-weight: var(--cell-font-weight);
+}
+
+.remove {
+  display: none;
+}
+
+.thing-cell:hover .remove {
+  line-height: 10px;
+  background: #f00;
+  border-radius: 100%;
+  font-size: 0.5em;
+  height: 15px;
+  width: 15px;
+  position: relative;
+  top: -28px;
+  left: -15px;
+  padding: 2px;
+  display: inline-block;
+  margin-right: -19px;
+  cursor: pointer;
+}
+
+.dragging-over {
+  opacity: 0.5;
+}
+
+.add-form {
+  margin: 0;
+  padding: 20px;
+  color: var(--white);
+  font-weight: 100;
+}
+
+input.add-thing,
+input.add-thing:focus,
+input.add-thing:active,
+input.add-thing:focus-visible {
+  font-size: 2em;
+  font-family: var(--font-family);
+  border: 0;
+  background-color: var(--dark-background);
+  color: var(--white);
+  outline: none;
+  border-bottom: 1px dotted var(--white);
+}
