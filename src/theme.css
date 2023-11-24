@@ -22,6 +22,11 @@ body {
   overflow: hidden;
 }
 
+.tier-row {
+  display: flex;
+  flex-direction: row;
+}
+
 .tier-label {
   font-size: 3em;
   display: 'inline-block';
@@ -51,7 +56,7 @@ body {
 .settings.hidden {
   visibility: hidden;
   opacity: 0;
-  transition: visibility 0.5s, opacity 0.5s ease-out;
+  transition: visibility 1s, opacity 1s ease-out;
 }
 
 .settings img {
@@ -95,6 +100,8 @@ body {
   background-color: var(--white);
   color: var(--dark-background);
   border-bottom-color: var(--dark-background);
+  height: 50px;
+  margin-top: 15px;
 }
 
 .settings:hover {
@@ -130,12 +137,21 @@ body {
 }
 
 .thing-cell {
-  margin: 0 var(--cell-spacing) 0 0;
   cursor: grab;
   font-weight: var(--cell-font-weight);
   font-size: var(--cell-font-size);
   text-align: left;
   min-width: unset;
+}
+
+.thing-cell img {
+  height: var(--cell-height);
+  padding: 0;
+  margin: 0;
+}
+
+.thing-cell span {
+  margin: 0 var(--cell-spacing) 0 var(--cell-spacing);
 }
 
 .dragging-over {
@@ -166,6 +182,8 @@ input[type='text']:focus-visible {
   display: flex;
   flex-direction: row;
   overflow-x: scroll;
+  padding: 20px;
+  min-height: 40px;
 }
 
 .search-results div {
@@ -185,4 +203,70 @@ input[type='text']:focus-visible {
   margin-top: -22px;
   margin-right: -24px;
   margin-left: -24px;
+}
+
+.search-results .loader {
+  width: 0;
+  height: 4px;
+  display: inline-block;
+  position: relative;
+  background: #FFF;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  box-sizing: border-box;
+  animation: animFw 8s linear infinite;
+}
+
+.search-results .loader::after,
+.search-results .loader::before {
+  content: '';
+  width: 10px;
+  height: 1px;
+  background: var(--red);
+  position: absolute;
+  top: 9px;
+  right: -2px;
+  opacity: 0;
+  transform: rotate(-45deg) translateX(0px);
+  box-sizing: border-box;
+  animation: coli1 0.3s linear infinite;
+}
+
+.search-results .loader::before {
+  top: -4px;
+  transform: rotate(45deg);
+  animation: coli2 0.3s linear infinite;
+}
+
+@keyframes animFw {
+  0% {
+    width: 0;
+  }
+
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes coli1 {
+  0% {
+    transform: rotate(-45deg) translateX(0px);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: rotate(-45deg) translateX(-45px);
+    opacity: 0;
+  }
+}
+
+@keyframes coli2 {
+  0% {
+    transform: rotate(45deg) translateX(0px);
+    opacity: 1;
+  }
+
+  100% {
+    transform: rotate(45deg) translateX(-45px);
+    opacity: 0.7;
+  }
 }

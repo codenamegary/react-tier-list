@@ -1,5 +1,5 @@
 import { Reducer } from "react"
-import { Thing, Tier, TierSchema } from "./TierSchema"
+import { NewThing, Thing, Tier, TierSchema } from "./TierSchema"
 import { v4 as uuidv4 } from 'uuid'
 
 const storageId = 'tier-list'
@@ -14,20 +14,23 @@ export enum Op {
   REMOVE,
   ADD,
   DRAG_START,
-  DRAG_END
+  DRAG_END,
+  RESET_THINGS
 }
 
 type DragStartAction = { op: Op.DRAG_START, thing: Thing }
 type DragEndAction = { op: Op.DRAG_END }
 type PlaceAction = { op: Op.PLACE, thing: Thing, tier: Tier }
 type RemoveAction = { op: Op.REMOVE, thing: Thing }
-type AddAction = { op: Op.ADD, text: string }
+type AddAction = { op: Op.ADD, thing: NewThing, tier?: Tier }
+type ResetAction = { op: Op.RESET_THINGS }
 export type Action =
   | PlaceAction
   | RemoveAction
   | AddAction
   | DragStartAction
   | DragEndAction
+  | ResetAction
 
 const transitions = {
   [Op.PLACE]: (state: TierState, action: PlaceAction) => {
@@ -56,8 +59,12 @@ const transitions = {
     return save({
       ...state,
       things: [...state.things, {
+        ...action.thing,
         id: uuidv4(),
-        title: action.text.trim()
+        place: action.tier ? {
+          row: action.tier.row,
+          order: 0
+        } : undefined
       }]
     })
   },
@@ -72,6 +79,12 @@ const transitions = {
       ...state,
       dragging: null
     }
+  },
+  [Op.RESET_THINGS]: (state: TierState) => {
+    return save({
+      ...state,
+      things: []
+    })
   }
 }
 
@@ -84,7 +97,7 @@ const save = (state: TierState): TierState => {
 const load = (): TierSchema | undefined => {
   const data = localStorage.getItem(storageId)
   if (!data) return undefined
-  return JSON.parse(data)
+  return JSON.parse(data) as TierSchema
 }
 
 export const init = (): TierState => {
@@ -111,10 +124,10 @@ export const init = (): TierState => {
       { id: uuidv4(), row: 4, title: "C", hexColor: "#ffdf80" },
     ],
     things: [
-      { id: uuidv4(), title: "Typescript" },
-      { id: uuidv4(), title: "Lambda" },
-      { id: uuidv4(), title: "Serverless" },
-      { id: uuidv4(), title: "DynamoDB" }
+      { id: uuidv4(), title: "Typescript", type: "text" },
+      { id: uuidv4(), title: "Lambda", type: "text" },
+      { id: uuidv4(), title: "Serverless", type: "text" },
+      { id: uuidv4(), title: "DynamoDB", type: "text" }
     ]
   }
   schema.tiers.push(queue)
@@ -136,6 +149,8 @@ export const tierListReducer: Reducer<TierState, Action> = (state: TierState, ac
     case Op.DRAG_START:
       return transitions[action.op](state, action)
     case Op.DRAG_END:
+      return transitions[action.op](state)
+    case Op.RESET_THINGS:
       return transitions[action.op](state)
   }
 }

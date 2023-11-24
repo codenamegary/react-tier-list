@@ -3,11 +3,17 @@ interface Place {
   order: number
 }
 
+export type ThingType = "text" | "image"
+
 export interface Thing {
   id: string
   title: string
+  dataUrl?: string
+  type: ThingType
   place?: Place
 }
+
+export type NewThing = Omit<Thing, "id">
 
 export interface Tier {
   id: string

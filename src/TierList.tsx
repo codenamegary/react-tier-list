@@ -1,6 +1,24 @@
-import React, { FormEvent, useReducer, useState, useEffect } from 'react'
+import React, { FormEvent, ReactNode, useReducer, useState } from 'react'
 import { Op, tierListReducer, init } from './TierListReducer'
-import { Thing, Tier } from './TierSchema'
+import { NewThing, Thing, Tier } from './TierSchema'
+import { newThingsFromFileList } from './files'
+
+const ThingDisplayImage: React.FC<{ thing: Thing }> = ({ thing }) => {
+  return <img src={thing.dataUrl} />
+}
+
+const ThingDisplayText: React.FC<{ thing: Thing }> = ({ thing }) => {
+  return <span>{thing.title}</span>
+}
+
+const getThingDisplay = (thing: Thing): ReactNode => {
+  switch (thing.type) {
+    case 'text':
+      return ThingDisplayText({ thing })
+    case 'image':
+      return ThingDisplayImage({ thing })
+  }
+}
 
 type ThingCellProps = {
   thing: Thing
@@ -8,6 +26,9 @@ type ThingCellProps = {
 }
 
 const ThingCell: React.FC<ThingCellProps> = ({ thing, dragStart }) => {
+
+  const display = getThingDisplay(thing)
+
   return (
     <span
       draggable
@@ -17,7 +38,7 @@ const ThingCell: React.FC<ThingCellProps> = ({ thing, dragStart }) => {
       }}
       className='tier-label thing-cell'
     >
-      {thing.title}
+      {display}
     </span>
   )
 }
@@ -26,30 +47,24 @@ type TierRowProps = {
   tier: Tier
   things: Thing[]
   move: (thing: Thing, tier: Tier) => void
+  add: (thing: NewThing, tier: Tier) => void
   dragStart: (thing: Thing) => void
   dragEnd: () => void
 }
 
-const TierRow: React.FC<TierRowProps> = ({ tier, things, move, dragStart, dragEnd }) => {
+const TierRow: React.FC<TierRowProps> = ({ tier, things, move, add, dragStart, dragEnd }) => {
 
   const [draggingOver, setDraggingOver] = useState(false)
 
-  const filter = (t: Thing) => {
-    return t.place?.row === tier.row || t.place === undefined && tier.row === 0
-  }
-
-  const rowStyle = (tier: Tier): React.CSSProperties => {
-    return {
-      background: `${tier.hexColor}`,
-      display: 'flex',
-      flexDirection: 'row'
-    }
-  }
+  const filter = (t: Thing) =>
+    t.place?.row === tier.row
+    || t.place === undefined
+    && tier.row === 0
 
   return (
     <div
-      style={rowStyle(tier)}
-      className={`${draggingOver ? 'dragging-over' : ''}`}
+      style={{ background: `${tier.hexColor}` }}
+      className={`tier-row${draggingOver ? ' dragging-over' : ''}`}
       onDragOver={(e) => {
         e.preventDefault()
         setDraggingOver(true)
@@ -58,17 +73,24 @@ const TierRow: React.FC<TierRowProps> = ({ tier, things, move, dragStart, dragEn
         e.preventDefault()
         setDraggingOver(false)
       }}
-      onDrop={(e) => {
+      onDrop={async (e) => {
         setDraggingOver(false)
         const thingId = e.dataTransfer.getData('thingId')
         const thing = things.find(v => v.id === thingId)
-        if (!thing) return
-        move(thing, tier)
+        if (thing) {
+          move(thing, tier)
+          dragEnd()
+          return
+        }
+        const fileThings = await newThingsFromFileList(e.dataTransfer.files)
+        await Promise.all(fileThings.map(async (t) => {
+          add(t, tier)
+        }))
         dragEnd()
       }}
     >
       <span className='tier-label'>{tier.title}</span>
-      {things.filter(filter).map(t => <ThingCell key={`key-thing-${t.title}`} thing={t} dragStart={dragStart} />)}
+      {things.filter(filter).map(t => <ThingCell key={`key-thing-${t.id}`} thing={t} dragStart={dragStart} />)}
     </div>
   )
 }
@@ -86,12 +108,20 @@ export const TierList: React.FC = () => {
     dispatch({ op: Op.REMOVE, thing: thing })
   }
 
+  const addThing = async (thing: NewThing, tier: Tier) => {
+    dispatch({ op: Op.ADD, thing: thing, tier: tier })
+  }
+
   const add = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const data = new FormData(e.currentTarget)
     const text = data.get("add-text")
     if (!text) return
-    dispatch({ op: Op.ADD, text: text.toString() })
+    const thing: NewThing = {
+      title: text.toString().trim(),
+      type: "text"
+    }
+    dispatch({ op: Op.ADD, thing: thing })
     setText("")
   }
 
@@ -111,14 +141,9 @@ export const TierList: React.FC = () => {
     ...(state.tiers.filter(t => t.row === 0))
   ]
 
-  const keyHandler = (e: KeyboardEvent) => {
-    console.log(`'${e.key}'`)
+  const destroy = () => {
+    dispatch({ op: Op.RESET_THINGS })
   }
-
-  useEffect(() => {
-    window.document.addEventListener("keydown", keyHandler)
-    return () => window.document.removeEventListener("keydown", keyHandler)
-  }, [])
 
   return (
     <div
@@ -131,6 +156,7 @@ export const TierList: React.FC = () => {
           tier={tier}
           things={state.things}
           move={move}
+          add={addThing}
           dragStart={dragStart}
           dragEnd={dragEnd}
         />)
@@ -158,7 +184,7 @@ export const TierList: React.FC = () => {
         className={`top-right settings${state.dragging ? ' hidden' : ''}`}
       >
         <img src="/ninja.svg" title="Settings" />
-        <img src="/destroy.svg" title="Delete all the things! \o/" />
+        <img src="/destroy.svg" title="Delete all the things! \o/" onClick={destroy} />
         <input type="text" placeholder='name this list' />
       </div>
       <div className='add-form'>

@@ -8,14 +8,18 @@ export const Search: React.FC = () => {
 
   const [text, setText] = useState("")
   const [images, setImages] = useState<GoogleSearchItem[]>([])
+  const [searching, setSearching] = useState(false)
 
   const search = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const url = `${baseUrl}&q=${encodeURI(text)}`
+    setImages([])
+    setSearching(true)
     const results = await fetch(url)
     const data = await results.text()
     const response: GoogleSearchResponse = JSON.parse(data)
     setImages(response.items)
+    setSearching(false)
   }
 
   return (
@@ -32,7 +36,12 @@ export const Search: React.FC = () => {
         />
       </form>
       <div className='search-results'>
-        {images.map(img => <div><img src={img.image.thumbnailLink} /></div>)}
+        {searching ? <span className='loader'></span> : <></>}
+        {!searching ? images.map(img =>
+          <div key={`img-search-${img.image.thumbnailLink}`}>
+            <img src={img.image.thumbnailLink} crossOrigin='anonymous' />
+          </div>
+        ) : <></>}
       </div>
     </div>
   )
