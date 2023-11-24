@@ -125,7 +125,7 @@ export const init = (): TierState => {
   }
 }
 
-export const appReducer: Reducer<TierState, Action> = (state: TierState, action: Action): TierState => {
+export const tierListReducer: Reducer<TierState, Action> = (state: TierState, action: Action): TierState => {
   switch (action.op) {
     case Op.PLACE:
       return transitions[action.op](state, action)

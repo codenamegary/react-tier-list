@@ -33,29 +33,89 @@ body {
   font-weight: var(--row-label-font-weight);
 }
 
-.trash {
+.top-right {
   position: absolute;
-  visibility: visible;
-  opacity: 1;
   top: 0;
   right: 0;
+  height: var(--cell-height);
+}
+
+.trash,
+.settings {
+  visibility: visible;
+  opacity: 1;
   transition: visibility 0s, opacity 0.5s ease-in;
 }
 
-.trash.hidden {
+.trash.hidden,
+.settings.hidden {
   visibility: hidden;
   opacity: 0;
   transition: visibility 0.5s, opacity 0.5s ease-out;
 }
 
-.trash img {
+.settings img {
   width: 50px;
   height: 50px;
   padding: 10px;
   margin: 4px;
+}
+
+.trash img {
+  width: 36px;
+  height: 36px;
+  padding: 17px;
+  margin: 4px;
+  border-radius: 40px;
+  border-color: var(--red);
+}
+
+.trash {
   background: var(--red);
-  border-radius: 100%;
-  z-index: 100;
+}
+
+.trash:hover img {
+  border-radius: 40px;
+  border-color: var(--white);
+}
+
+.settings {
+  background-color: var(--white);
+  width: var(--cell-height);
+  height: var(--cell-height);
+  display: flex;
+  flex-direction: row-reverse;
+  overflow: hidden;
+}
+
+.settings input[type='text'],
+.settings input[type='text']:focus,
+.settings input[type='text']:active,
+.settings input[type='text']:focus-visible {
+  background-color: var(--white);
+  color: var(--dark-background);
+  border-bottom-color: var(--dark-background);
+}
+
+.settings:hover {
+  width: 600px;
+  transition: width 0.4s ease-in-out;
+}
+
+.settings:hover img {
+  transform: rotate3d(-2, 1, 3, 720deg);
+  transition: transform 0.4s ease-in-out;
+  cursor: pointer;
+}
+
+.settings ul {
+  visibility: hidden;
+  list-style-type: none;
+}
+
+.settings:hover ul {
+  visibility: visible;
+  transition: visibility 1s;
 }
 
 .trash.hovering {
@@ -64,12 +124,14 @@ body {
 }
 
 .trash.hovering img {
-  border: var(--trash-hovering-border) solid #000;
+  border: var(--trash-hovering-border) solid var(--red);
+  border-radius: 100%;
+  background-color: var(--red);
 }
 
 .thing-cell {
   margin: 0 var(--cell-spacing) 0 0;
-  cursor: move;
+  cursor: grab;
   font-weight: var(--cell-font-weight);
   font-size: var(--cell-font-size);
   text-align: left;
@@ -80,17 +142,17 @@ body {
   opacity: 0.5;
 }
 
-.add-form {
+form {
   margin: 0;
   padding: 20px;
   color: var(--white);
   font-weight: 100;
 }
 
-input.add-thing,
-input.add-thing:focus,
-input.add-thing:active,
-input.add-thing:focus-visible {
+input[type='text'],
+input[type='text']:focus,
+input[type='text']:active,
+input[type='text']:focus-visible {
   font-size: 2em;
   font-family: var(--font-family);
   border: 0;
@@ -98,4 +160,29 @@ input.add-thing:focus-visible {
   color: var(--white);
   outline: none;
   border-bottom: 1px dotted var(--white);
+}
+
+.search-results {
+  display: flex;
+  flex-direction: row;
+  overflow-x: scroll;
+}
+
+.search-results div {
+  margin-top: 22px;
+}
+
+.search-results img {
+  height: 80px;
+}
+
+.search-results img:hover {
+  position: relative;
+  border: 4px solid #000;
+  border-radius: 22px;
+  height: 120px;
+  cursor: grab;
+  margin-top: -22px;
+  margin-right: -24px;
+  margin-left: -24px;
 }
