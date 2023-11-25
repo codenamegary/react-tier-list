@@ -9,17 +9,31 @@ export const Search: React.FC = () => {
   const [text, setText] = useState("")
   const [images, setImages] = useState<GoogleSearchItem[]>([])
   const [searching, setSearching] = useState(false)
+  const [nextSearchUrl, setNextSearchUrl] = useState<string>()
+
+  const baseSearchUrl = () => `${baseUrl}&q=${encodeURI(text)}`
 
   const search = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const url = `${baseUrl}&q=${encodeURI(text)}`
     setImages([])
     setSearching(true)
-    const results = await fetch(url)
+    const results = await fetch(baseSearchUrl())
     const data = await results.text()
     const response: GoogleSearchResponse = JSON.parse(data)
     setImages(response.items)
+    const nextStart = response.queries.nextPage[0].startIndex
+    setNextSearchUrl(`${baseSearchUrl()}&start=${nextStart}`)
     setSearching(false)
+  }
+
+  const searchMore = async () => {
+    if (!nextSearchUrl) return
+    const results = await fetch(nextSearchUrl)
+    const data = await results.text()
+    const response: GoogleSearchResponse = JSON.parse(data)
+    setImages(prev => [...prev, ...response.items])
+    const nextStart = response.queries.nextPage[0].startIndex
+    setNextSearchUrl(`${baseSearchUrl()}&start=${nextStart}`)
   }
 
   return (
@@ -38,11 +52,10 @@ export const Search: React.FC = () => {
       <div className='search-results'>
         {searching ? <span className='loader'></span> : <></>}
         {!searching ? images.map(img =>
-          <div key={`img-search-${img.image.thumbnailLink}`}>
-            <img src={img.image.thumbnailLink} crossOrigin='anonymous' />
-          </div>
+          <img key={`img-search-${img.image.thumbnailLink}`} src={img.image.thumbnailLink} crossOrigin='anonymous' />
         ) : <></>}
+        {images.length > 0 ? <span onClick={() => searchMore()} className='search-more'>more</span> : ""}
       </div>
-    </div>
+    </div >
   )
 }

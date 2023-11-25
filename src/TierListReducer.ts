@@ -117,11 +117,11 @@ export const init = (): TierState => {
   }
   const schema: TierSchema = {
     tiers: [
-      { id: uuidv4(), row: 1, title: "S", hexColor: "#7eff80" },
-      { id: uuidv4(), row: 2, title: "A", hexColor: "#beff7f" },
+      { id: uuidv4(), row: 1, title: "S", hexColor: "#ff7f7e" },
+      { id: uuidv4(), row: 2, title: "A", hexColor: "#ffdf80" },
       { id: uuidv4(), row: 3, title: "B", hexColor: "#feff7f" },
-      { id: uuidv4(), row: 5, title: "F", hexColor: "#ff7f7e" },
-      { id: uuidv4(), row: 4, title: "C", hexColor: "#ffdf80" },
+      { id: uuidv4(), row: 4, title: "C", hexColor: "#beff7f" },
+      { id: uuidv4(), row: 5, title: "F", hexColor: "#7eff80" }
     ],
     things: [
       { id: uuidv4(), title: "Typescript", type: "text" },
