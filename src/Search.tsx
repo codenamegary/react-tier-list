@@ -1,10 +1,13 @@
 import { FormEvent, useState } from "react"
+import { useTierList } from "./TierListContext"
 
 const apiKey = import.meta.env.VITE_GOOGLE_SEARCH_API_KEY
 const searchEngineId = import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID
 const baseUrl = `https://customsearch.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&searchType=image`
 
 export const Search: React.FC = () => {
+
+  const { dragStart } = useTierList()
 
   const [text, setText] = useState("")
   const [images, setImages] = useState<GoogleSearchItem[]>([])
@@ -52,7 +55,7 @@ export const Search: React.FC = () => {
       <div className='search-results'>
         {searching ? <span className='loader'></span> : <></>}
         {!searching ? images.map(img =>
-          <img key={`img-search-${img.image.thumbnailLink}`} src={img.image.thumbnailLink} crossOrigin='anonymous' />
+          <img key={`img-search-${img.image.thumbnailLink}`} src={img.image.thumbnailLink} onDragStart={() => dragStart()} crossOrigin='anonymous' />
         ) : <></>}
         {images.length > 0 ? <span onClick={() => searchMore()} className='search-more'>more</span> : ""}
       </div>

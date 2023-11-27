@@ -1,7 +1,7 @@
-import React, { FormEvent, ReactNode, useReducer, useState } from 'react'
-import { Op, tierListReducer, init } from './TierListReducer'
+import React, { FormEvent, ReactNode, useState } from 'react'
 import { NewThing, Thing, Tier } from './TierSchema'
 import { newThingsFromFileList } from './files'
+import { useTierList } from './TierListContext'
 
 const ThingDisplayImage: React.FC<{ thing: Thing }> = ({ thing }) => {
   return <img src={thing.dataUrl} />
@@ -22,11 +22,11 @@ const getThingDisplay = (thing: Thing): ReactNode => {
 
 type ThingCellProps = {
   thing: Thing
-  dragStart: (thing: Thing) => void
 }
 
-const ThingCell: React.FC<ThingCellProps> = ({ thing, dragStart }) => {
+const ThingCell: React.FC<ThingCellProps> = ({ thing }) => {
 
+  const { dragStart } = useTierList()
   const display = getThingDisplay(thing)
 
   return (
@@ -45,15 +45,11 @@ const ThingCell: React.FC<ThingCellProps> = ({ thing, dragStart }) => {
 
 type TierRowProps = {
   tier: Tier
-  things: Thing[]
-  move: (thing: Thing, tier: Tier) => void
-  add: (thing: NewThing, tier: Tier) => void
-  dragStart: (thing: Thing) => void
-  dragEnd: () => void
 }
 
-const TierRow: React.FC<TierRowProps> = ({ tier, things, move, add, dragStart, dragEnd }) => {
+const TierRow: React.FC<TierRowProps> = ({ tier }) => {
 
+  const { things, place, dragEnd, add } = useTierList()
   const [draggingOver, setDraggingOver] = useState(false)
 
   const filter = (t: Thing) =>
@@ -78,7 +74,7 @@ const TierRow: React.FC<TierRowProps> = ({ tier, things, move, add, dragStart, d
         const thingId = e.dataTransfer.getData('thingId')
         const thing = things.find(v => v.id === thingId)
         if (thing) {
-          move(thing, tier)
+          place(thing, tier)
           dragEnd()
           return
         }
@@ -90,29 +86,17 @@ const TierRow: React.FC<TierRowProps> = ({ tier, things, move, add, dragStart, d
       }}
     >
       <span className='tier-label'>{tier.title}</span>
-      {things.filter(filter).map(t => <ThingCell key={`key-thing-${t.id}`} thing={t} dragStart={dragStart} />)}
+      {things.filter(filter).map(t => <ThingCell key={`key-thing-${t.id}`} thing={t} />)}
     </div>
   )
 }
 
 export const TierList: React.FC = () => {
 
-  const [state, dispatch] = useReducer(tierListReducer, null, init)
+  const { tiers, dragging, draggedThing, remove, add, dragEnd, deleteAllThings } = useTierList()
   const [text, setText] = useState("")
 
-  const move = async (thing: Thing, tier: Tier) => {
-    dispatch({ op: Op.PLACE, thing: thing, tier: tier })
-  }
-
-  const remove = async (thing: Thing) => {
-    dispatch({ op: Op.REMOVE, thing: thing })
-  }
-
-  const addThing = async (thing: NewThing, tier: Tier) => {
-    dispatch({ op: Op.ADD, thing: thing, tier: tier })
-  }
-
-  const add = async (e: FormEvent<HTMLFormElement>) => {
+  const addText = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const data = new FormData(e.currentTarget)
     const text = data.get("add-text")
@@ -121,49 +105,32 @@ export const TierList: React.FC = () => {
       title: text.toString().trim(),
       type: "text"
     }
-    dispatch({ op: Op.ADD, thing: thing })
+    add(thing)
     setText("")
-  }
-
-  const dragStart = async (thing: Thing) => {
-    dispatch({ op: Op.DRAG_START, thing: thing })
-  }
-
-  const dragEnd = () => {
-    dispatch({ op: Op.DRAG_END })
   }
 
   // Just ordering the array so that numbered
   // tiers are at the top and the queue is
   // at the bottom.
-  const tiers = [
-    ...(state.tiers.filter(t => t.row > 0)?.sort((t1, t2) => t1.row - t2.row)),
-    ...(state.tiers.filter(t => t.row === 0))
+  const sortedTiers = [
+    ...(tiers.filter(t => t.row > 0)?.sort((t1, t2) => t1.row - t2.row)),
+    ...(tiers.filter(t => t.row === 0))
   ]
-
-  const destroy = () => {
-    dispatch({ op: Op.RESET_THINGS })
-  }
 
   return (
     <>
       <div
-        className={`tier-list${state.dragging ? ' dragging' : ''}`}
+        className={`tier-list${dragging ? ' dragging' : ''}`}
         style={{ width: "100%" }}
       >
-        {tiers.map(tier =>
+        {sortedTiers.map(tier =>
           <TierRow
             key={`tier-${tier.row}`}
             tier={tier}
-            things={state.things}
-            move={move}
-            add={addThing}
-            dragStart={dragStart}
-            dragEnd={dragEnd}
           />)
         }
         <div
-          className={`top-right trash${state.dragging ? '' : ' hidden'}`}
+          className={`top-right trash${dragging ? '' : ' hidden'}`}
           onDragOver={(e) => {
             e.preventDefault()
             e.currentTarget.classList.add('hovering')
@@ -173,24 +140,22 @@ export const TierList: React.FC = () => {
             e.currentTarget.classList.remove('hovering')
           }}
           onDrop={() => {
-            const thing = state.dragging
-            if (!thing) return
-            remove(thing)
+            if (draggedThing) remove(draggedThing)
             dragEnd()
           }}
         >
           <img src='/trash.svg' />
         </div>
         <div
-          className={`top-right settings${state.dragging ? ' hidden' : ''}`}
+          className={`top-right settings${dragging ? ' hidden' : ''}`}
         >
           <img src="/ninja.svg" title="Settings" />
-          <img src="/destroy.svg" title="Delete all the things! \o/" onClick={destroy} className='destroy' />
+          <img src="/destroy.svg" title="Delete all the things! \o/" onClick={deleteAllThings} className='destroy' />
           {/* <input type="text" placeholder='name this list' /> */}
         </div>
       </div>
       <div className='add-form'>
-        <form onSubmit={add}>
+        <form onSubmit={addText}>
           <input
             id="add-text"
             name="add-text"

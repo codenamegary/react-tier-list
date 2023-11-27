@@ -2,12 +2,15 @@ import React from 'react'
 import { TierList } from './TierList'
 import { Search } from './Search'
 import './theme.css'
+import { TierListProvider } from './TierListContext'
 
 const App: React.FC = () => {
   return (
     <div>
-      <TierList />
-      <Search />
+      <TierListProvider>
+        <TierList />
+        <Search />
+      </TierListProvider>
     </div>
   )
 }

@@ -6,7 +6,8 @@ const storageId = 'tier-list'
 
 export interface TierState extends TierSchema {
   loading: boolean
-  dragging: Thing | null
+  draggedThing: Thing | null
+  dragging: boolean
 }
 
 export enum Op {
@@ -15,15 +16,15 @@ export enum Op {
   ADD,
   DRAG_START,
   DRAG_END,
-  RESET_THINGS
+  DELETE_ALL_THINGS
 }
 
-type DragStartAction = { op: Op.DRAG_START, thing: Thing }
+type DragStartAction = { op: Op.DRAG_START, thing?: Thing }
 type DragEndAction = { op: Op.DRAG_END }
 type PlaceAction = { op: Op.PLACE, thing: Thing, tier: Tier }
 type RemoveAction = { op: Op.REMOVE, thing: Thing }
 type AddAction = { op: Op.ADD, thing: NewThing, tier?: Tier }
-type ResetAction = { op: Op.RESET_THINGS }
+type ResetAction = { op: Op.DELETE_ALL_THINGS }
 export type Action =
   | PlaceAction
   | RemoveAction
@@ -71,16 +72,18 @@ const transitions = {
   [Op.DRAG_START]: (state: TierState, action: DragStartAction) => {
     return {
       ...state,
-      dragging: action.thing
+      dragging: true,
+      draggedThing: action.thing || null
     }
   },
   [Op.DRAG_END]: (state: TierState) => {
     return {
       ...state,
-      dragging: null
+      dragging: false,
+      draggedThing: null
     }
   },
-  [Op.RESET_THINGS]: (state: TierState) => {
+  [Op.DELETE_ALL_THINGS]: (state: TierState) => {
     return save({
       ...state,
       things: []
@@ -106,7 +109,8 @@ export const init = (): TierState => {
     return {
       ...fromStorage,
       loading: false,
-      dragging: null
+      draggedThing: null,
+      dragging: false
     }
   }
   const queue: Tier = {
@@ -134,7 +138,8 @@ export const init = (): TierState => {
   return {
     ...schema,
     loading: false,
-    dragging: null
+    draggedThing: null,
+    dragging: false
   }
 }
 
@@ -150,7 +155,7 @@ export const tierListReducer: Reducer<TierState, Action> = (state: TierState, ac
       return transitions[action.op](state, action)
     case Op.DRAG_END:
       return transitions[action.op](state)
-    case Op.RESET_THINGS:
+    case Op.DELETE_ALL_THINGS:
       return transitions[action.op](state)
   }
 }
