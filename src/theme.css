@@ -39,6 +39,30 @@ body {
   flex-direction: row;
 }
 
+.tier-list.loading .tier-row {
+  background-color: var(--red) !important;
+  opacity: 0.2;
+}
+
+.tier-list.loading .loading-text {
+  position: absolute;
+  display: block;
+  width: 100%;
+  text-align: center;
+  color: var(--white);
+  font-size: 1.2em;
+  padding-top: 180px;
+  visibility: visible;
+}
+
+.tier-list .loading-text {
+  display: none;
+}
+
+.tier-list.loading .tier-row * {
+  visibility: hidden;
+}
+
 .tier-list.dragging .tier-row {
   filter: grayscale(100%) brightness(40%);
 }
@@ -130,7 +154,7 @@ body {
 }
 
 .settings:hover {
-  width: 160px;
+  width: calc(var(--cell-height)*4);
   transition: width 0.4s ease-in-out;
 }
 
@@ -226,7 +250,7 @@ input[type='text']:focus-visible {
   top: 0;
 }
 
-.search-results img:hover,
+.search-results img:hover:not([src="/google.svg"]),
 .search-results .search-more:hover {
   position: relative;
   line-height: var(--search-item-hover-dimension);
@@ -313,5 +337,39 @@ input[type='text']:focus-visible {
   100% {
     transform: rotate(45deg) translateX(-45px);
     opacity: 0.7;
+  }
+}
+
+.tier-list .loader {
+  width: 48px;
+  height: 6px;
+  display: block;
+  position: relative;
+  margin: auto;
+  top: 30px;
+  color: var(--white);
+  box-sizing: border-box;
+  animation: animloader 2s linear infinite;
+}
+
+@keyframes animloader {
+  0% {
+    box-shadow: -10px 20px, 10px 35px, 0px 50px
+  }
+
+  25% {
+    box-shadow: 0px 20px, 0px 35px, 10px 50px
+  }
+
+  50% {
+    box-shadow: 10px 20px, -10px 35px, 0px 50px
+  }
+
+  75% {
+    box-shadow: 0px 20px, 0px 35px, -10px 50px
+  }
+
+  100% {
+    box-shadow: -10px 20px, 10px 35px, 0px 50px
   }
 }

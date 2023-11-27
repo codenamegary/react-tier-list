@@ -5,9 +5,9 @@ import { v4 as uuidv4 } from 'uuid'
 const storageId = 'tier-list'
 
 export interface TierState extends TierSchema {
-  loading: boolean
   draggedThing: Thing | null
   dragging: boolean
+  loading: boolean
 }
 
 export enum Op {
@@ -16,22 +16,31 @@ export enum Op {
   ADD,
   DRAG_START,
   DRAG_END,
-  DELETE_ALL_THINGS
+  DELETE_ALL_THINGS,
+  LOAD,
+  LOADING_START,
+  LOADING_END
 }
 
+type LoadAction = { op: Op.LOAD, schemaJson: string }
+type LoadStartAction = { op: Op.LOADING_START }
+type LoadEndAction = { op: Op.LOADING_END }
 type DragStartAction = { op: Op.DRAG_START, thing?: Thing }
 type DragEndAction = { op: Op.DRAG_END }
 type PlaceAction = { op: Op.PLACE, thing: Thing, tier: Tier }
 type RemoveAction = { op: Op.REMOVE, thing: Thing }
 type AddAction = { op: Op.ADD, thing: NewThing, tier?: Tier }
-type ResetAction = { op: Op.DELETE_ALL_THINGS }
+type DeleteAllThingsAction = { op: Op.DELETE_ALL_THINGS }
 export type Action =
   | PlaceAction
   | RemoveAction
   | AddAction
   | DragStartAction
   | DragEndAction
-  | ResetAction
+  | DeleteAllThingsAction
+  | LoadAction
+  | LoadStartAction
+  | LoadEndAction
 
 const transitions = {
   [Op.PLACE]: (state: TierState, action: PlaceAction) => {
@@ -88,6 +97,29 @@ const transitions = {
       ...state,
       things: []
     })
+  },
+  [Op.LOAD]: (state: TierState, action: LoadAction) => {
+    const schema: TierSchema = JSON.parse(action.schemaJson)
+    return save({
+      ...state,
+      things: schema.things,
+      tiers: schema.tiers,
+      draggedThing: null,
+      dragging: false,
+      loading: false
+    })
+  },
+  [Op.LOADING_START]: (state: TierState) => {
+    return {
+      ...state,
+      loading: true
+    }
+  },
+  [Op.LOADING_END]: (state: TierState) => {
+    return {
+      ...state,
+      loading: false
+    }
   }
 }
 
@@ -108,9 +140,9 @@ export const init = (): TierState => {
   if (fromStorage) {
     return {
       ...fromStorage,
-      loading: false,
       draggedThing: null,
-      dragging: false
+      dragging: false,
+      loading: false
     }
   }
   const queue: Tier = {
@@ -127,19 +159,14 @@ export const init = (): TierState => {
       { id: uuidv4(), row: 4, title: "C", hexColor: "#beff7f" },
       { id: uuidv4(), row: 5, title: "F", hexColor: "#7eff80" }
     ],
-    things: [
-      { id: uuidv4(), title: "Typescript", type: "text" },
-      { id: uuidv4(), title: "Lambda", type: "text" },
-      { id: uuidv4(), title: "Serverless", type: "text" },
-      { id: uuidv4(), title: "DynamoDB", type: "text" }
-    ]
+    things: []
   }
   schema.tiers.push(queue)
   return {
     ...schema,
-    loading: false,
     draggedThing: null,
-    dragging: false
+    dragging: false,
+    loading: false
   }
 }
 
@@ -151,11 +178,17 @@ export const tierListReducer: Reducer<TierState, Action> = (state: TierState, ac
       return transitions[action.op](state, action)
     case Op.ADD:
       return transitions[action.op](state, action)
+    case Op.LOAD:
+      return transitions[action.op](state, action)
     case Op.DRAG_START:
       return transitions[action.op](state, action)
     case Op.DRAG_END:
       return transitions[action.op](state)
     case Op.DELETE_ALL_THINGS:
+      return transitions[action.op](state)
+    case Op.LOADING_START:
+      return transitions[action.op](state)
+    case Op.LOADING_END:
       return transitions[action.op](state)
   }
 }

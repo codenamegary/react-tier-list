@@ -28,7 +28,6 @@ export const Search: React.FC = () => {
         thumbnailLink: googleIcon
       }
     } as GoogleSearchItem, 0, 10)
-    console.log(placeholders)
     setImages(prev => [...prev, ...placeholders])
   }
 
