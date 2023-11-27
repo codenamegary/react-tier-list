@@ -1,5 +1,5 @@
-import React, { FormEvent, ReactNode, useState } from 'react'
-import { NewThing, Thing, Tier } from './TierSchema'
+import React, { ReactNode, useState } from 'react'
+import { Thing, Tier } from './TierSchema'
 import { newThingsFromFileList } from './files'
 import { useTierList } from './TierListContext'
 
@@ -93,21 +93,7 @@ const TierRow: React.FC<TierRowProps> = ({ tier }) => {
 
 export const TierList: React.FC = () => {
 
-  const { tiers, dragging, draggedThing, remove, add, dragEnd, deleteAllThings } = useTierList()
-  const [text, setText] = useState("")
-
-  const addText = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const data = new FormData(e.currentTarget)
-    const text = data.get("add-text")
-    if (!text) return
-    const thing: NewThing = {
-      title: text.toString().trim(),
-      type: "text"
-    }
-    add(thing)
-    setText("")
-  }
+  const { tiers, dragging, draggedThing, remove, dragEnd, deleteAllThings } = useTierList()
 
   // Just ordering the array so that numbered
   // tiers are at the top and the queue is
@@ -153,19 +139,6 @@ export const TierList: React.FC = () => {
           <img src="/destroy.svg" title="Delete all the things! \o/" onClick={deleteAllThings} className='destroy' />
           {/* <input type="text" placeholder='name this list' /> */}
         </div>
-      </div>
-      <div className='add-form'>
-        <form onSubmit={addText}>
-          <input
-            id="add-text"
-            name="add-text"
-            type="text"
-            className='add-thing'
-            placeholder='add a thing'
-            onChange={(e) => setText(e.target.value)}
-            value={text}
-          />
-        </form>
       </div>
     </>
   )

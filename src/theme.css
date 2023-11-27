@@ -189,6 +189,15 @@ input[type='text']:focus-visible {
   border-bottom: 1px dotted var(--white);
 }
 
+.search .search-error {
+  background: var(--red);
+  color: var(--dark-background);
+  padding: 20px;
+  font-weight: 400;
+  font-size: 1.3em;
+  width: 350px;
+}
+
 .search-results {
   display: flex;
   flex-direction: row;
@@ -230,6 +239,15 @@ input[type='text']:focus-visible {
   margin-right: var(--search-item-hover-margin);
   margin-bottom: calc(var(--search-item-hover-margin) * 2);
   cursor: grab;
+}
+
+.search-results img[src="/google.svg"] {
+  width: calc(var(--search-item-dimension)*0.25);
+  height: calc(var(--search-item-dimension)*0.25);
+  padding: calc(var(--search-item-dimension)*0.75/2);
+  opacity: 0.2;
+  background: var(--red);
+  background: linear-gradient(124deg, var(--red) 0%, rgba(239, 255, 101, 1) 35%, rgba(132, 234, 255, 1) 100%);
 }
 
 .search-results .loader {
