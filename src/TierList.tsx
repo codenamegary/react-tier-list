@@ -1,5 +1,5 @@
 import React, { ChangeEvent, ReactNode, useRef, useState } from 'react'
-import { newThingsFromFileList } from './files'
+import { newThingsFromDataTransferItemList } from './files'
 import { useTierList } from './TierListContext'
 import { Thing, Tier } from './TierSchema'
 import { useAnalytics } from './analytics'
@@ -72,6 +72,7 @@ const TierRow: React.FC<TierRowProps> = ({ tier }) => {
         setDraggingOver(false)
       }}
       onDrop={async (e) => {
+        e.preventDefault()
         setDraggingOver(false)
         const thingId = e.dataTransfer.getData('thingId')
         const thing = things.find(v => v.id === thingId)
@@ -81,11 +82,19 @@ const TierRow: React.FC<TierRowProps> = ({ tier }) => {
           dragEnd()
           return
         }
-        const fileThings = await newThingsFromFileList(e.dataTransfer.files)
+        const fileThings = await newThingsFromDataTransferItemList(e.dataTransfer.items)
         await Promise.all(fileThings.map(async (t) => {
           tracker('added', 'image')
           add(t, tier)
         }))
+        // const fileThings = await newThingsFromFileList(e.dataTransfer.files)
+        // await Promise.all([
+        //   ...fPromises,
+        //   ...fileThings.map(async (t) => {
+        //     tracker('added', 'image')
+        //     add(t, tier)
+        //   })
+        // ])
         dragEnd()
       }}
     >
