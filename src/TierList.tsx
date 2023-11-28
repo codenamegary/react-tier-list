@@ -2,6 +2,7 @@ import React, { ChangeEvent, ReactNode, useRef, useState } from 'react'
 import { newThingsFromFileList } from './files'
 import { useTierList } from './TierListContext'
 import { Thing, Tier } from './TierSchema'
+import { useAnalytics } from './analytics'
 
 const ThingDisplayImage: React.FC<{ thing: Thing }> = ({ thing }) => {
   return <img src={thing.dataUrl} />
@@ -51,6 +52,7 @@ const TierRow: React.FC<TierRowProps> = ({ tier }) => {
 
   const { things, place, dragEnd, add } = useTierList()
   const [draggingOver, setDraggingOver] = useState(false)
+  const tracker = useAnalytics('tier_list')
 
   const filter = (t: Thing) =>
     t.place?.row === tier.row
@@ -74,12 +76,14 @@ const TierRow: React.FC<TierRowProps> = ({ tier }) => {
         const thingId = e.dataTransfer.getData('thingId')
         const thing = things.find(v => v.id === thingId)
         if (thing) {
+          tracker('moved', thing.type === 'image' ? 'image' : thing.title)
           place(thing, tier)
           dragEnd()
           return
         }
         const fileThings = await newThingsFromFileList(e.dataTransfer.files)
         await Promise.all(fileThings.map(async (t) => {
+          tracker('added', 'image')
           add(t, tier)
         }))
         dragEnd()
@@ -94,6 +98,7 @@ const TierRow: React.FC<TierRowProps> = ({ tier }) => {
 export const TierList: React.FC = () => {
 
   const { tiers, things, dragging, draggedThing, loading, load, remove, dragEnd, deleteAllThings } = useTierList()
+  const tracker = useAnalytics('tier_list')
 
   const fileInput = useRef<HTMLInputElement>(null)
 
@@ -106,6 +111,7 @@ export const TierList: React.FC = () => {
   ]
 
   const download = () => {
+    tracker('download')
     const data = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify({ tiers: tiers, things: things }))}`
     const elem = document.createElement('a')
     elem.href = data
@@ -123,6 +129,7 @@ export const TierList: React.FC = () => {
   const openFile = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length <= 0) return
     const f = e.target.files[0]
+    tracker('import', f.name, f.size)
     load(f)
   }
 

@@ -1,11 +1,13 @@
 import { FormEvent, useState } from "react"
 import { NewThing } from "./TierSchema"
 import { useTierList } from "./TierListContext"
+import { useAnalytics } from "./analytics"
 
 export const AddText: React.FC = () => {
 
   const { add } = useTierList()
   const [text, setText] = useState("")
+  const tracker = useAnalytics('tier_list')
 
   const addText = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -16,6 +18,7 @@ export const AddText: React.FC = () => {
       title: text.toString().trim(),
       type: "text"
     }
+    tracker("added", thing.title)
     add(thing)
     setText("")
   }

@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react"
 import { useTierList } from "./TierListContext"
 import { AddText } from "./AddText"
+import { useAnalytics } from "./analytics"
 
 const apiKey = import.meta.env.VITE_GOOGLE_SEARCH_API_KEY
 const searchEngineId = import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID
@@ -9,6 +10,7 @@ const baseUrl = `https://customsearch.googleapis.com/customsearch/v1?key=${apiKe
 export const Search: React.FC = () => {
 
   const { dragStart } = useTierList()
+  const tracker = useAnalytics('search')
 
   const googleIcon = '/google.svg'
 
@@ -37,6 +39,7 @@ export const Search: React.FC = () => {
 
   const search = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    tracker("execute", text)
     try {
       setImages([])
       setError("")
